@@ -1,0 +1,9 @@
+androguard==3.3.5
+fastapi
+uvicorn[standard]
+python-multipart
+numpy
+pandas
+scikit-learn
+lightgbm
+joblib

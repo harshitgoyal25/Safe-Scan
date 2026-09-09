@@ -1,0 +1,35 @@
+# Python environments and generated files
+safescan_backend/.venv/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Flutter and Android generated files
+safescan_frontend/build/
+safescan_frontend/.dart_tool/
+safescan_frontend/.flutter-plugins
+safescan_frontend/.flutter-plugins-dependencies
+safescan_frontend/.packages
+safescan_frontend/android/.gradle/
+safescan_frontend/android/local.properties
+safescan_frontend/android/app/debug/
+safescan_frontend/android/app/profile/
+safescan_frontend/android/app/release/
+
+# IDE and machine-local files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+*.log
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+**/secrets/
+**/*.jks
+**/*.keystore

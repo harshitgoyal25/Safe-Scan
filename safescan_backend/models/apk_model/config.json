@@ -1,0 +1,47 @@
+{
+  "project": "SafeScan",
+  "model_type": "LightGBM",
+  "dataset": "MH-100K",
+  "seed": 42,
+  "original_feature_count": 24833,
+  "frequency_filter": {
+    "min_train_frequency": 2,
+    "features_after_filter": 21169
+  },
+  "feature_selection": {
+    "method": "chi2",
+    "selection_data": "train_only",
+    "selected_feature_count": 10000
+  },
+  "model": {
+    "objective": "binary",
+    "n_estimators": 500,
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "max_depth": -1,
+    "min_child_samples": 30,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1,
+    "class_weight": "balanced",
+    "random_state": 42
+  },
+  "threshold": {
+    "selection_data": "validation_only",
+    "criterion": "best_precision_with_recall_at_least_95_percent",
+    "value": 0.5199999999999998
+  },
+  "split": {
+    "strategy": "stratified",
+    "train_fraction": 0.7,
+    "validation_fraction": 0.15,
+    "test_fraction": 0.15,
+    "random_state": 42
+  },
+  "artifacts": {
+    "model": "model.pkl",
+    "selected_features": "selected_features.csv",
+    "original_features": "feature_names.csv"
+  }
+}

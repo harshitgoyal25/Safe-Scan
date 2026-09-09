@@ -1,0 +1,77 @@
+{
+  "project": "SafeScan",
+  "model_type": "LogisticRegression",
+  "dataset": "URL dataset.csv",
+  "task": "Binary URL classification",
+  "seed": 42,
+  "dataset_info": {
+    "samples": 450176,
+    "legitimate": 345738,
+    "phishing": 104438
+  },
+  "split": {
+    "strategy": "stratified",
+    "train_fraction": 0.7,
+    "validation_fraction": 0.15,
+    "test_fraction": 0.15,
+    "random_state": 42
+  },
+  "label_mapping": {
+    "legitimate": 0,
+    "phishing": 1
+  },
+  "word_tfidf": {
+    "analyzer": "word",
+    "token_pattern": "[^/\\s]+",
+    "lowercase": true,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "max_df": 0.98,
+    "sublinear_tf": true,
+    "max_features": 100000
+  },
+  "char_tfidf": {
+    "analyzer": "char",
+    "lowercase": true,
+    "ngram_range": [
+      3,
+      5
+    ],
+    "min_df": 2,
+    "sublinear_tf": true,
+    "max_features": 100000
+  },
+  "combined_features": 200000,
+  "model": {
+    "algorithm": "LogisticRegression",
+    "C": 2.0,
+    "class_weight": "balanced",
+    "solver": "liblinear",
+    "max_iter": 2000,
+    "random_state": 42
+  },
+  "threshold": {
+    "value": 0.41,
+    "selection_data": "validation",
+    "criterion": "best_f1"
+  },
+  "test_results": {
+    "accuracy": 0.9982525508315192,
+    "balanced_accuracy": 0.9974590125502005,
+    "roc_auc": 0.9997664164365079,
+    "pr_auc": 0.9995949056037958,
+    "confusion_matrix": [
+      [
+        51806,
+        55
+      ],
+      [
+        63,
+        15603
+      ]
+    ]
+  }
+}

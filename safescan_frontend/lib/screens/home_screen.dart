@@ -4,8 +4,31 @@ import 'sms_scan_screen.dart';
 import 'scan_screen.dart';
 import 'url_scan_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../services/sms_background_service.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isAutoProtectEnabled = false;
+
+  void _toggleAutoProtect(bool value) async {
+    if (value) {
+      await SmsBackgroundService().init();
+      setState(() {
+        _isAutoProtectEnabled = true;
+      });
+    } else {
+      // In a real app, you would unregister the listener or pause it.
+      setState(() {
+        _isAutoProtectEnabled = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +56,7 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'A calmer way to check what you receive.',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: const Color(0xFF12312F),
+                  color: Colors.white,
                   fontWeight: FontWeight.w800,
                   height: 1.08,
                 ),
@@ -50,8 +73,19 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F766E), Color(0xFF0D5F58)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F766E).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -81,6 +115,41 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+              
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Automatic SMS Protection',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Scan incoming messages in the background',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _isAutoProtectEnabled,
+                    onChanged: _toggleAutoProtect,
+                    activeColor: const Color(0xFF0F766E),
+                  ),
+                ],
+              ),
               const SizedBox(height: 28),
 
               const Text(
@@ -92,7 +161,8 @@ class HomeScreen extends StatelessWidget {
                 icon: Icons.android_rounded,
                 title: 'Scan an APK',
                 subtitle: 'Check an Android app before installing it.',
-                color: const Color(0xFFE2F3EE),
+                iconBgColor: const Color(0xFF0F766E).withOpacity(0.2),
+                iconColor: const Color(0xFF80D5CB),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ScanScreen()),
@@ -103,7 +173,8 @@ class HomeScreen extends StatelessWidget {
                 icon: Icons.sms_rounded,
                 title: 'Scan an SMS',
                 subtitle: 'Spot suspicious messages and scam language.',
-                color: const Color(0xFFFFEEDB),
+                iconBgColor: const Color(0xFFB45309).withOpacity(0.2),
+                iconColor: const Color(0xFFFCD34D),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const SmsScanScreen()),
@@ -114,7 +185,8 @@ class HomeScreen extends StatelessWidget {
                 icon: Icons.link_rounded,
                 title: 'Scan a URL',
                 subtitle: 'Check a link before opening the website.',
-                color: const Color(0xFFE8E9FF),
+                iconBgColor: const Color(0xFF4338CA).withOpacity(0.2),
+                iconColor: const Color(0xFFA5B4FC),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const UrlScanScreen()),
@@ -161,14 +233,16 @@ class _ScannerCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Color color;
+  final Color iconBgColor;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _ScannerCard({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.color,
+    required this.iconBgColor,
+    required this.iconColor,
     required this.onTap,
   });
 
@@ -183,9 +257,9 @@ class _ScannerCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E9E6)),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
           child: Row(
             children: [
@@ -193,10 +267,10 @@ class _ScannerCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: color,
+                  color: iconBgColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: const Color(0xFF12312F)),
+                child: Icon(icon, color: iconColor),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -206,6 +280,7 @@ class _ScannerCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),

@@ -32,7 +32,23 @@ class ResultScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 16),
 
-              Icon(statusIcon, size: 90, color: statusColor),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: CircularProgressIndicator(
+                      value: result.probability.clamp(0.0, 1.0),
+                      strokeWidth: 12,
+                      backgroundColor: const Color(0xFF1A1A1A),
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                      strokeCap: StrokeCap.round,
+                    ),
+                  ),
+                  Icon(statusIcon, size: 60, color: statusColor),
+                ],
+              ),
 
               const SizedBox(height: 18),
 
@@ -120,11 +136,6 @@ class ResultScreen extends StatelessWidget {
                         ),
                       ),
 
-                      LinearProgressIndicator(
-                        value: result.probability.clamp(0.0, 1.0),
-                        minHeight: 10,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                     ],
                   ),
                 ),

@@ -1,0 +1,46 @@
+import 'package:telephony/telephony.dart';
+import 'api_service.dart';
+import 'notification_service.dart';
+
+@pragma('vm:entry-point')
+backgroundMessageHandler(SmsMessage message) async {
+  final notificationService = NotificationService();
+  await notificationService.init();
+
+  final apiService = ApiService();
+
+  try {
+    if (message.body != null && message.body!.isNotEmpty) {
+      final response = await apiService.scanSms(message.body!);
+      final prediction = response['prediction']?.toString() ?? 'Unknown';
+      final isMalicious = prediction.toLowerCase() == 'malicious';
+
+      await notificationService.showSmsScanResult(message.address, isMalicious);
+    }
+  } catch (e) {
+    print("Background SMS scan failed: $e");
+  }
+}
+
+class SmsBackgroundService {
+  static final SmsBackgroundService _instance = SmsBackgroundService._internal();
+  factory SmsBackgroundService() => _instance;
+
+  final Telephony telephony = Telephony.instance;
+
+  SmsBackgroundService._internal();
+
+  Future<void> init() async {
+    bool? result = await telephony.requestPhoneAndSmsPermissions;
+    
+    if (result != null && result) {
+      telephony.listenIncomingSms(
+        onNewMessage: (SmsMessage message) async {
+          // Trigger the same background handler for foreground messages as well
+          backgroundMessageHandler(message);
+        },
+        onBackgroundMessage: backgroundMessageHandler,
+      );
+    }
+  }
+}

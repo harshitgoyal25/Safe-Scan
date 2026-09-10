@@ -111,36 +111,70 @@ class _ScanScreenState extends State<ScanScreen> {
             children: [
               const SizedBox(height: 20),
 
-              const Icon(
-                Icons.android,
-                size: 72,
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                'Analyze an APK',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              InkWell(
+                onTap: _isScanning ? null : _selectApk,
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFF0F766E).withOpacity(0.5),
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F766E).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.android_rounded,
+                          size: 48,
+                          color: Color(0xFF80D5CB),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Select an APK file to scan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'SafeScan performs static analysis and machine-learning based malware detection.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F766E),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.folder_open, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Browse Files', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 12),
-
-              const Text(
-                'SafeScan performs static analysis and '
-                'machine-learning based malware detection.',
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 40),
-
-              OutlinedButton.icon(
-                onPressed: _isScanning ? null : _selectApk,
-                icon: const Icon(Icons.folder_open),
-                label: const Text('Select APK'),
               ),
 
               const SizedBox(height: 20),

@@ -87,39 +87,49 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
             const SizedBox(height: 30),
 
             const Icon(
-              Icons.link,
-              size: 80,
+              Icons.link_rounded,
+              size: 64,
+              color: Color(0xFF80D5CB),
             ),
 
             const SizedBox(height: 24),
 
             const Text(
-              'URL Security Scan',
+              'Analyze a URL',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
 
             const SizedBox(height: 12),
 
-            const Text(
+            Text(
               'Enter a URL to check whether it is potentially malicious.',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+              ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
 
             TextField(
               controller: _urlController,
               keyboardType: TextInputType.url,
               maxLength: 10000,
+              maxLines: 4,
+              minLines: 4,
+              style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                labelText: 'URL',
-                hintText: 'https://example.com',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.link),
+                hintText: 'Paste a URL here to analyze...',
+                hintStyle: TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                contentPadding: EdgeInsets.all(20),
               ),
               onSubmitted: (_) {
                 if (!_isScanning) {
@@ -128,10 +138,10 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
               },
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             SizedBox(
-              height: 52,
+              height: 56,
               child: ElevatedButton.icon(
                 onPressed:
                     _isScanning ? null : _scanUrl,
@@ -141,18 +151,26 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Icon(Icons.security),
                 label: Text(
                   _isScanning
-                      ? 'Scanning...'
-                      : 'Scan URL',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      ? 'Analyzing Content...'
+                      : 'Analyze Content',
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            
+            Text(
+              'SafeScan checks against known threat databases and analyzes language patterns.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withOpacity(0.5),
               ),
             ),
           ],

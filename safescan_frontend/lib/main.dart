@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 
-void main() {
+import 'services/notification_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  final notificationService = NotificationService();
+  await notificationService.init();
+
   runApp(const SafeScanApp());
 }
 
@@ -16,52 +23,59 @@ class SafeScanApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0F766E),
-          brightness: Brightness.light,
+          brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF6F8F7),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFF6F8F7),
+          backgroundColor: Color(0xFF121212),
           elevation: 0,
-          centerTitle: false,
+          centerTitle: true,
           titleTextStyle: TextStyle(
-            color: Color(0xFF12312F),
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
-          iconTheme: IconThemeData(color: Color(0xFF12312F)),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
         cardTheme: CardThemeData(
-          color: Colors.white,
+          color: const Color(0xFF1E1E1E),
           elevation: 0,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-            side: BorderSide(color: Color(0xFFE2E9E6)),
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            side: BorderSide(color: Colors.white.withOpacity(0.05)),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
+          fillColor: const Color(0xFF1A1A1A),
+          border: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
-            borderSide: BorderSide(color: Color(0xFFD5E1DD)),
+            borderSide: BorderSide(color: Color(0xFF2A2A2A)),
           ),
-          enabledBorder: OutlineInputBorder(
+          enabledBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
-            borderSide: BorderSide(color: Color(0xFFD5E1DD)),
+            borderSide: BorderSide(color: Color(0xFF2A2A2A)),
           ),
-          focusedBorder: OutlineInputBorder(
+          focusedBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
             borderSide: BorderSide(color: Color(0xFF0F766E), width: 2),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(54),
+            minimumSize: const Size.fromHeight(56),
             backgroundColor: const Color(0xFF0F766E),
             foregroundColor: Colors.white,
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -69,9 +83,14 @@ class SafeScanApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(54),
-            foregroundColor: const Color(0xFF0F766E),
-            side: const BorderSide(color: Color(0xFF8BB8B0)),
+            minimumSize: const Size.fromHeight(56),
+            foregroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFF2A2A2A)),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),

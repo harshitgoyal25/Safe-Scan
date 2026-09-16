@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import '../services/scan_history_service.dart';
 import 'sms_result_screen.dart';
 
 class SmsScanScreen extends StatefulWidget {
@@ -11,8 +14,7 @@ class SmsScanScreen extends StatefulWidget {
 }
 
 class _SmsScanScreenState extends State<SmsScanScreen> {
-  final TextEditingController _messageController =
-      TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
 
   final ApiService _apiService = ApiService();
 
@@ -29,11 +31,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
 
     if (message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please enter an SMS message.',
-          ),
-        ),
+        const SnackBar(content: Text('Please enter an SMS message.')),
       );
       return;
     }
@@ -43,31 +41,24 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
     });
 
     try {
-      final result = await _apiService.scanSms(
-        message,
-      );
+      final result = await _apiService.scanSms(message);
 
       if (!mounted) return;
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SmsResultScreen(
-            message: message,
-            result: result,
-          ),
+          builder: (context) =>
+              SmsResultScreen(message: message, result: result),
         ),
       );
+      unawaited(_saveHistory(message, result));
     } catch (e) {
-      if (!mounted) return;
+      debugPrint('SMS scan history save failed.');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'SMS scan failed: $e',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('SMS scan failed: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -77,27 +68,33 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
     }
   }
 
+  Future<void> _saveHistory(String message, Map<String, dynamic> result) async {
+    try {
+      await ScanHistoryService().saveScan(
+        scanType: 'sms',
+        inputLabel: 'SMS text',
+        inputValue: message,
+        result: result,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('SMS history save failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan SMS'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Scan SMS'), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
 
-              const Icon(
-                Icons.sms_rounded,
-                size: 64,
-                color: Color(0xFF80D5CB),
-              ),
+              const Icon(Icons.sms_rounded, size: 64, color: Color(0xFF80D5CB)),
 
               const SizedBox(height: 24),
 
@@ -116,9 +113,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
               Text(
                 'Enter an SMS message to check whether it is benign or potentially malicious.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                ),
+                style: TextStyle(color: Colors.white.withOpacity(0.7)),
               ),
 
               const SizedBox(height: 32),
@@ -145,28 +140,27 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed:
-                      _isScanning ? null : _scanSms,
+                  onPressed: _isScanning ? null : _scanSms,
                   icon: _isScanning
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Icon(Icons.security),
                   label: Text(
-                    _isScanning
-                        ? 'Analyzing Content...'
-                        : 'Analyze Content',
+                    _isScanning ? 'Analyzing Content...' : 'Analyze Content',
                   ),
                 ),
               ),
 
               const SizedBox(height: 24),
-              
+
               Text(
                 'SafeScan checks against known threat databases and analyzes language patterns. Do not enter sensitive information.',
                 textAlign: TextAlign.center,

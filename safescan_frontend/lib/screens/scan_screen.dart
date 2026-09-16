@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../models/scan_result.dart';
 import '../services/api_service.dart';
+import '../services/scan_history_service.dart';
 import 'result_screen.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -62,9 +64,7 @@ class _ScanScreenState extends State<ScanScreen> {
     });
 
     try {
-      final response = await _apiService.scanApk(
-        _selectedApk!,
-      );
+      final response = await _apiService.scanApk(_selectedApk!);
 
       if (!mounted) return;
 
@@ -72,12 +72,11 @@ class _ScanScreenState extends State<ScanScreen> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => ResultScreen(result: result),
-        ),
+        MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
       );
+      unawaited(_saveHistory(response, result));
     } catch (e) {
-      if (!mounted) return;
+      debugPrint('APK scan history save failed.');
 
       setState(() {
         _errorMessage = 'Scan failed. Please try again.';
@@ -91,6 +90,23 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  Future<void> _saveHistory(
+    Map<String, dynamic> response,
+    ScanResult result,
+  ) async {
+    try {
+      await ScanHistoryService().saveScan(
+        scanType: 'apk',
+        inputLabel: 'APK file',
+        inputValue: result.filename.isEmpty ? _fileName : result.filename,
+        result: response,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('APK history save failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   String get _fileName {
     if (_selectedApk == null) return '';
 
@@ -100,9 +116,7 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan APK'),
-      ),
+      appBar: AppBar(title: const Text('Scan APK')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -115,7 +129,10 @@ class _ScanScreenState extends State<ScanScreen> {
                 onTap: _isScanning ? null : _selectApk,
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 40,
+                    horizontal: 20,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E1E1E),
                     borderRadius: BorderRadius.circular(24),
@@ -152,13 +169,14 @@ class _ScanScreenState extends State<ScanScreen> {
                       Text(
                         'SafeScan performs static analysis and machine-learning based malware detection.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                        ),
+                        style: TextStyle(color: Colors.white.withOpacity(0.7)),
                       ),
                       const SizedBox(height: 32),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF0F766E),
                           borderRadius: BorderRadius.circular(12),
@@ -166,9 +184,19 @@ class _ScanScreenState extends State<ScanScreen> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.folder_open, color: Colors.white, size: 20),
+                            Icon(
+                              Icons.folder_open,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
-                            Text('Browse Files', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            Text(
+                              'Browse Files',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -207,9 +235,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.red,
-                  ),
+                  style: const TextStyle(color: Colors.red),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -225,9 +251,7 @@ class _ScanScreenState extends State<ScanScreen> {
                             SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                             SizedBox(width: 12),
                             Text('Analyzing APK...'),

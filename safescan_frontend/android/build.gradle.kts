@@ -1,3 +1,5 @@
+import com.android.build.gradle.LibraryExtension
+
 allprojects {
     repositories {
         google()
@@ -17,6 +19,16 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+subprojects {
+    plugins.withId("com.android.library") {
+        if (name == "telephony") {
+            extensions.configure<LibraryExtension> {
+                namespace = "com.shounakmulay.telephony"
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

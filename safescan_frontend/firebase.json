@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"safescan-eb0f7","appId":"1:663688269984:android:8a1cd7f5db7c1e2da139c5","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"safescan-eb0f7","configurations":{"android":"1:663688269984:android:8a1cd7f5db7c1e2da139c5"}}}}},"firestore":{"rules":"firestore.rules"}}

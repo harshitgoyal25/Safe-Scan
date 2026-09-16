@@ -1,6 +1,7 @@
 import 'package:telephony/telephony.dart';
 import 'api_service.dart';
 import 'notification_service.dart';
+import 'scan_history_service.dart';
 
 @pragma('vm:entry-point')
 backgroundMessageHandler(SmsMessage message) async {
@@ -15,6 +16,17 @@ backgroundMessageHandler(SmsMessage message) async {
       final prediction = response['prediction']?.toString() ?? 'Unknown';
       final isMalicious = prediction.toLowerCase() == 'malicious';
 
+      try {
+        await ScanHistoryService().saveScan(
+          scanType: 'sms',
+          inputLabel: message.address ?? 'Incoming SMS',
+          inputValue: message.body!,
+          result: response,
+        );
+      } catch (_) {
+        // Background notifications should continue even if history is unavailable.
+      }
+
       await notificationService.showSmsScanResult(message.address, isMalicious);
     }
   } catch (e) {
@@ -23,7 +35,8 @@ backgroundMessageHandler(SmsMessage message) async {
 }
 
 class SmsBackgroundService {
-  static final SmsBackgroundService _instance = SmsBackgroundService._internal();
+  static final SmsBackgroundService _instance =
+      SmsBackgroundService._internal();
   factory SmsBackgroundService() => _instance;
 
   final Telephony telephony = Telephony.instance;
@@ -32,7 +45,7 @@ class SmsBackgroundService {
 
   Future<void> init() async {
     bool? result = await telephony.requestPhoneAndSmsPermissions;
-    
+
     if (result != null && result) {
       telephony.listenIncomingSms(
         onNewMessage: (SmsMessage message) async {

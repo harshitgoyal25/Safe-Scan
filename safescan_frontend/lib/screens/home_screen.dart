@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'sms_scan_screen.dart';
 import 'scan_screen.dart';
 import 'url_scan_screen.dart';
+import 'history_screen.dart';
 
 import '../services/sms_background_service.dart';
 
@@ -39,9 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('SafeScan'),
         actions: [
           IconButton(
-            onPressed: () => _showAbout(context),
-            tooltip: 'About SafeScan',
-            icon: const Icon(Icons.info_outline_rounded),
+            onPressed: () => _showProfile(context),
+            tooltip: 'Profile',
+            icon: const Icon(Icons.account_circle_outlined),
           ),
           const SizedBox(width: 8),
         ],
@@ -116,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -213,16 +216,180 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAbout(BuildContext context) {
-    showAboutDialog(
+  Future<void> _showProfile(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final profileFuture = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    showModalBottomSheet<void>(
       context: context,
-      applicationName: 'SafeScan',
-      applicationVersion: '1.0.0',
-      applicationIcon: const Icon(Icons.shield_rounded),
-      children: const [
-        Text(
-          'Scan apps, messages, and links for suspicious signals. '
-          'Results are automated indicators, not guarantees of safety.',
+      backgroundColor: const Color(0xFF1E1E1E),
+      showDragHandle: true,
+      builder: (context) {
+        return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          future: profileFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Unable to load your profile. Please try again.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final profile = snapshot.data?.data() ?? <String, dynamic>{};
+            final name = _profileValue(
+              profile['name'],
+              user.displayName ?? 'SafeScan user',
+            );
+            final email = _profileValue(
+              profile['email'],
+              user.email ?? 'Not available',
+            );
+            final mobile = _profileValue(profile['mobile'], 'Not available');
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.18),
+                          child: Icon(
+                            Icons.person_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _ProfileDetail(icon: Icons.email_outlined, value: email),
+                    const SizedBox(height: 10),
+                    _ProfileDetail(icon: Icons.phone_outlined, value: mobile),
+                    const SizedBox(height: 18),
+                    const Divider(color: Color(0xFF2A2A2A)),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.history_rounded),
+                      title: const Text('Scan history'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HistoryScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.settings_outlined),
+                      title: const Text('Settings'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showComingSoon(context, 'Settings');
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.description_outlined),
+                      title: const Text('Licence'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pop(context);
+                        showLicensePage(
+                          context: context,
+                          applicationName: 'SafeScan',
+                          applicationVersion: '1.0.0',
+                        );
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.logout_rounded),
+                      title: const Text('Logout'),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await FirebaseAuth.instance.signOut();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _profileValue(Object? value, String fallback) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  void _showComingSoon(BuildContext context, String title) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$title is coming soon.')));
+  }
+}
+
+class _ProfileDetail extends StatelessWidget {
+  final IconData icon;
+  final String value;
+
+  const _ProfileDetail({required this.icon, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(value, style: const TextStyle(color: Colors.white70)),
         ),
       ],
     );

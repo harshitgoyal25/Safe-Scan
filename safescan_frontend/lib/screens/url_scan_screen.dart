@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import '../services/scan_history_service.dart';
 import 'url_result_screen.dart';
 
 class UrlScanScreen extends StatefulWidget {
@@ -11,8 +14,7 @@ class UrlScanScreen extends StatefulWidget {
 }
 
 class _UrlScanScreenState extends State<UrlScanScreen> {
-  final TextEditingController _urlController =
-      TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
 
   final ApiService _apiService = ApiService();
 
@@ -28,11 +30,9 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
     final url = _urlController.text.trim();
 
     if (url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a URL.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a URL.')));
       return;
     }
 
@@ -47,22 +47,15 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => UrlResultScreen(
-            result: result,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => UrlResultScreen(result: result)),
       );
+      unawaited(_saveHistory(url, result));
     } catch (e) {
-      if (!mounted) return;
+      debugPrint('URL scan history save failed.');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'URL scan failed: $e',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('URL scan failed: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -72,13 +65,24 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
     }
   }
 
+  Future<void> _saveHistory(String url, Map<String, dynamic> result) async {
+    try {
+      await ScanHistoryService().saveScan(
+        scanType: 'url',
+        inputLabel: 'URL',
+        inputValue: url,
+        result: result,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('URL history save failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan URL'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Scan URL'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -86,11 +90,7 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
           children: [
             const SizedBox(height: 30),
 
-            const Icon(
-              Icons.link_rounded,
-              size: 64,
-              color: Color(0xFF80D5CB),
-            ),
+            const Icon(Icons.link_rounded, size: 64, color: Color(0xFF80D5CB)),
 
             const SizedBox(height: 24),
 
@@ -109,9 +109,7 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
             Text(
               'Enter a URL to check whether it is potentially malicious.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-              ),
+              style: TextStyle(color: Colors.white.withOpacity(0.7)),
             ),
 
             const SizedBox(height: 32),
@@ -143,28 +141,27 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
             SizedBox(
               height: 56,
               child: ElevatedButton.icon(
-                onPressed:
-                    _isScanning ? null : _scanUrl,
+                onPressed: _isScanning ? null : _scanUrl,
                 icon: _isScanning
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Icon(Icons.security),
                 label: Text(
-                  _isScanning
-                      ? 'Analyzing Content...'
-                      : 'Analyze Content',
+                  _isScanning ? 'Analyzing Content...' : 'Analyze Content',
                 ),
               ),
             ),
 
             const SizedBox(height: 24),
-            
+
             Text(
               'SafeScan checks against known threat databases and analyzes language patterns.',
               textAlign: TextAlign.center,

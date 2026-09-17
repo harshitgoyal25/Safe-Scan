@@ -146,7 +146,6 @@ def health():
 @app.post("/scan")
 async def scan_apk(
     file: UploadFile = File(...),
-    _user_id: str = Depends(current_user_id),
 ):
 
     if not file.filename:
@@ -242,7 +241,6 @@ async def scan_apk(
 @app.post("/scan/sms")
 async def scan_sms(
     request: SMSRequest,
-    _user_id: str = Depends(current_user_id),
 ):
 
     message = request.message
@@ -288,7 +286,6 @@ async def scan_sms(
 @app.post("/scan/url")
 async def scan_url(
     request: URLRequest,
-    _user_id: str = Depends(current_user_id),
 ):
 
     url = request.url.strip()

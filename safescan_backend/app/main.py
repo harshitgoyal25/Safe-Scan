@@ -1,6 +1,8 @@
 from pathlib import Path
 import tempfile
 
+import os
+
 import firebase_admin
 from firebase_admin import auth, credentials, firestore
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
@@ -26,13 +28,48 @@ MAX_FILE_SIZE = 200 * 1024 * 1024
 MAX_TEXT_LENGTH = 10000
 
 
+# The Firebase project that both the Flutter client and this backend share.
+# Must match the projectId in safescan_frontend/lib/firebase_options.dart.
+_FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "safescan-eb0f7")
+
+
 def _initialize_firebase():
+    """Initialize the Firebase Admin SDK.
+
+    Token *verification* (auth.verify_id_token) only needs the project ID and
+    access to Google's public JWKS endpoint — no service-account key required.
+
+    If GOOGLE_APPLICATION_CREDENTIALS is set (e.g. on a private server or in a
+    Render secret file), the SDK will also be able to make privileged calls such
+    as writing to Firestore with server-side credentials.
+    """
     if firebase_admin._apps:
         return
 
+    # Build options — always provide the project ID so verify_id_token can
+    # validate the 'aud' claim in the Firebase ID token JWT.
+    options = {"projectId": _FIREBASE_PROJECT_ID}
+
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if cred_path and os.path.isfile(cred_path):
+        # Full service-account credentials: enables Firestore server-side writes.
+        cred = credentials.Certificate(cred_path)
+    else:
+        # Try Application Default Credentials (available on GCP / Cloud Run).
+        # Falls back to None on Render/bare servers — token verification via
+        # public JWKS still works as long as projectId is supplied.
+        try:
+            cred = credentials.ApplicationDefault()
+        except Exception:
+            cred = None
+
     try:
-        firebase_admin.initialize_app()
+        if cred is not None:
+            firebase_admin.initialize_app(cred, options)
+        else:
+            firebase_admin.initialize_app(options=options)
     except ValueError:
+        # Already initialized (e.g. during hot-reload or test setUp).
         pass
 
 

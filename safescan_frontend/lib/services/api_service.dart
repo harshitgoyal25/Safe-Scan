@@ -12,11 +12,15 @@ class ApiService {
   );
 
   Future<Map<String, String>> _headers() async {
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (token == null || token.isEmpty) {
-      throw StateError('You must be signed in to scan.');
+    try {
+      final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+      if (token != null && token.isNotEmpty) {
+        return {'Authorization': 'Bearer $token'};
+      }
+    } catch (_) {
+      // Return empty headers if Firebase auth is uninitialized or user is not logged in
     }
-    return {'Authorization': 'Bearer $token'};
+    return {};
   }
 
   // ==========================================================

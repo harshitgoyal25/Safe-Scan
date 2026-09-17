@@ -18,6 +18,8 @@ safescan_frontend/android/local.properties
 safescan_frontend/android/app/debug/
 safescan_frontend/android/app/profile/
 safescan_frontend/android/app/release/
+safescan_frontend/android/build/
+/*.png
 
 # IDE and machine-local files
 .idea/

@@ -10,6 +10,9 @@ plugins {
 
 android {
     namespace = "com.example.safescan_frontend"
+    buildFeatures {
+        buildConfig = true
+    }
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -32,6 +35,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField(
+            "String",
+            "SAFESCAN_API_URL",
+            "\"${project.findProperty("safescanApiUrl") ?: "https://safe-scan-hhw5.onrender.com"}\""
+        )
     }
 
     buildTypes {
@@ -48,5 +56,7 @@ flutter {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
+    implementation("com.google.firebase:firebase-auth")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

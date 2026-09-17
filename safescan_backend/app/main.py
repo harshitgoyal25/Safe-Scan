@@ -1,7 +1,9 @@
 from pathlib import Path
 import tempfile
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+import firebase_admin
+from firebase_admin import auth, credentials, firestore
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.extractor import predict_apk
@@ -24,6 +26,23 @@ MAX_FILE_SIZE = 200 * 1024 * 1024
 MAX_TEXT_LENGTH = 10000
 
 
+def _initialize_firebase():
+    if firebase_admin._apps:
+        return
+
+    try:
+        firebase_admin.initialize_app()
+    except ValueError:
+        pass
+
+
+try:
+    _initialize_firebase()
+    FIRESTORE = firestore.client()
+except Exception:
+    FIRESTORE = None
+
+
 # ============================================================
 # REQUEST MODELS
 # ============================================================
@@ -34,6 +53,29 @@ class SMSRequest(BaseModel):
 
 class URLRequest(BaseModel):
     url: str
+
+
+class ScanHistoryRequest(BaseModel):
+    scan_type: str
+    input_label: str
+    input_value: str
+    result: dict
+
+
+def current_user_id(authorization: str | None = Header(default=None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required.")
+
+    if not firebase_admin._apps:
+        raise HTTPException(status_code=503, detail="Authentication is unavailable.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    try:
+        decoded = auth.verify_id_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid authentication token.")
+
+    return decoded["uid"]
 
 
 # ============================================================
@@ -65,7 +107,10 @@ def health():
 # ============================================================
 
 @app.post("/scan")
-async def scan_apk(file: UploadFile = File(...)):
+async def scan_apk(
+    file: UploadFile = File(...),
+    _user_id: str = Depends(current_user_id),
+):
 
     if not file.filename:
         raise HTTPException(
@@ -158,7 +203,10 @@ async def scan_apk(file: UploadFile = File(...)):
 # ============================================================
 
 @app.post("/scan/sms")
-async def scan_sms(request: SMSRequest):
+async def scan_sms(
+    request: SMSRequest,
+    _user_id: str = Depends(current_user_id),
+):
 
     message = request.message
 
@@ -201,7 +249,10 @@ async def scan_sms(request: SMSRequest):
 # ============================================================
 
 @app.post("/scan/url")
-async def scan_url(request: URLRequest):
+async def scan_url(
+    request: URLRequest,
+    _user_id: str = Depends(current_user_id),
+):
 
     url = request.url.strip()
 
@@ -238,3 +289,25 @@ async def scan_url(request: URLRequest):
             status_code=500,
             detail="URL analysis failed.",
         )
+
+
+@app.post("/scan/history", status_code=204)
+def save_scan_history(
+    request: ScanHistoryRequest,
+    user_id: str = Depends(current_user_id),
+):
+    if FIRESTORE is None:
+        raise HTTPException(status_code=503, detail="History is unavailable.")
+
+    FIRESTORE.collection("users").document(user_id).collection("scan_history").add({
+        "scanType": request.scan_type,
+        "inputLabel": request.input_label,
+        "inputValue": request.input_value,
+        "prediction": request.result.get("prediction", "Unknown"),
+        "probability": float(request.result.get("probability", 0.0)),
+        "probabilityPercent": float(request.result.get("probability", 0.0)) * 100,
+        "isMalicious": str(request.result.get("prediction", "")).lower()
+        in {"malicious", "malware"},
+        "result": request.result,
+        "createdAt": firestore.SERVER_TIMESTAMP,
+    })

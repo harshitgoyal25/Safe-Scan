@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 import '../services/scan_history_service.dart';
+import '../theme/app_theme.dart';
 import 'sms_result_screen.dart';
 
 class SmsScanScreen extends StatefulWidget {
@@ -15,9 +16,7 @@ class SmsScanScreen extends StatefulWidget {
 
 class _SmsScanScreenState extends State<SmsScanScreen> {
   final TextEditingController _messageController = TextEditingController();
-
   final ApiService _apiService = ApiService();
-
   bool _isScanning = false;
 
   @override
@@ -31,7 +30,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
 
     if (message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an SMS message.')),
+        const SnackBar(content: Text('Please enter or paste an SMS message.')),
       );
       return;
     }
@@ -54,11 +53,13 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
       );
       unawaited(_saveHistory(message, result));
     } catch (e) {
-      debugPrint('SMS scan history save failed.');
+      debugPrint('SMS scan failed: $e');
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('SMS scan failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('SMS scan failed: $e')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -85,88 +86,143 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan SMS'), centerTitle: true),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Scan SMS'),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
-
-              const Icon(Icons.sms_rounded, size: 64, color: Color(0xFF80D5CB)),
-
-              const SizedBox(height: 24),
+              // Icon Header Container
+              Center(
+                child: Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    color: const Color(0x26FCD34D),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFCD34D).withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.sms_rounded,
+                      size: 34,
+                      color: Color(0xFFFCD34D),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
 
               const Text(
                 'Analyze a Message',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.4,
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              Text(
-                'Enter an SMS message to check whether it is benign or potentially malicious.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white.withOpacity(0.7)),
-              ),
-
-              const SizedBox(height: 32),
-
-              TextField(
-                controller: _messageController,
-                maxLines: 8,
-                minLines: 8,
-                maxLength: 10000,
-                textInputAction: TextInputAction.newline,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Paste or type the SMS message here...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                  contentPadding: EdgeInsets.all(20),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              SizedBox(
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _isScanning ? null : _scanSms,
-                  icon: _isScanning
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Icon(Icons.security),
-                  label: Text(
-                    _isScanning ? 'Analyzing Content...' : 'Analyze Content',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Text(
-                'SafeScan checks against known threat databases and analyzes language patterns. Do not enter sensitive information.',
+              const SizedBox(height: 6),
+              const Text(
+                'Enter an SMS message to check whether it contains phishing links, suspicious claims, or social engineering tactics.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.5),
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Message Input Box
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: TextField(
+                  controller: _messageController,
+                  maxLines: 7,
+                  minLines: 6,
+                  maxLength: 5000,
+                  textInputAction: TextInputAction.newline,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Paste or type the SMS message content here...',
+                    hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.all(14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Action button
+              ElevatedButton(
+                onPressed: _isScanning ? null : _scanSms,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryTeal,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: _isScanning
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Analyzing Content...',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                        ],
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shield_outlined, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Analyze Content',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                'SafeScan checks NLP language patterns against active threat signatures. Do not input confidential credentials or OTPs.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  height: 1.35,
                 ),
               ),
             ],

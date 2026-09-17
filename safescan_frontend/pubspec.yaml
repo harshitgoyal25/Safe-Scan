@@ -39,6 +39,7 @@ dependencies:
   telephony: ^0.2.0
   flutter_local_notifications: ^22.3.0
   permission_handler: ^12.0.1
+  shared_preferences: ^2.5.3
   firebase_core: ^4.15.0
   firebase_auth: ^6.7.0
   cloud_firestore: ^6.10.0
@@ -53,6 +54,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  # App launcher icon generation
+  flutter_launcher_icons: ^0.14.4
+
+  # Native splash screen generation
+  flutter_native_splash: ^2.4.7
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -69,6 +76,8 @@ flutter:
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/safescan_logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -95,3 +104,31 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  # ─────────────────────────────────────────────
+# Launcher icon configuration
+# ─────────────────────────────────────────────
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/images/safescan_logo.png"
+
+  # Keep the launcher icon background dark.
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: "assets/images/safescan_logo.png"
+  # ─────────────────────────────────────────────
+# Native splash screen configuration
+# ─────────────────────────────────────────────
+
+flutter_native_splash:
+  color: "#121212"
+
+  image: assets/images/safescan_logo.png
+
+  android: true
+  ios: true
+
+  android_12:
+    color: "#121212"
+    image: assets/images/safescan_logo.png

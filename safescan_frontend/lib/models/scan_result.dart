@@ -26,7 +26,10 @@ class ScanResult {
     );
   }
 
-  bool get isMalware => prediction == 'Malware';
+  bool get isMalware {
+    final normalized = prediction.toLowerCase();
+    return normalized == 'malware' || normalized == 'malicious';
+  }
 
   double get probabilityPercent => probability * 100;
 }

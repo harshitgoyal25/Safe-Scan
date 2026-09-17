@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 import '../services/scan_history_service.dart';
+import '../theme/app_theme.dart';
 import 'url_result_screen.dart';
 
 class UrlScanScreen extends StatefulWidget {
@@ -15,9 +16,7 @@ class UrlScanScreen extends StatefulWidget {
 
 class _UrlScanScreenState extends State<UrlScanScreen> {
   final TextEditingController _urlController = TextEditingController();
-
   final ApiService _apiService = ApiService();
-
   bool _isScanning = false;
 
   @override
@@ -30,9 +29,9 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
     final url = _urlController.text.trim();
 
     if (url.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a URL.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter or paste a URL.')),
+      );
       return;
     }
 
@@ -51,11 +50,13 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
       );
       unawaited(_saveHistory(url, result));
     } catch (e) {
-      debugPrint('URL scan history save failed.');
+      debugPrint('URL scan failed: $e');
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('URL scan failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('URL scan failed: $e')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -82,95 +83,149 @@ class _UrlScanScreenState extends State<UrlScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan URL'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 30),
-
-            const Icon(Icons.link_rounded, size: 64, color: Color(0xFF80D5CB)),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Analyze a URL',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              'Enter a URL to check whether it is potentially malicious.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withOpacity(0.7)),
-            ),
-
-            const SizedBox(height: 32),
-
-            TextField(
-              controller: _urlController,
-              keyboardType: TextInputType.url,
-              maxLength: 10000,
-              maxLines: 4,
-              minLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Paste a URL here to analyze...',
-                hintStyle: TextStyle(color: Colors.grey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Scan URL'),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Icon Header Container
+              Center(
+                child: Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    color: const Color(0x26A5B4FC),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFA5B4FC).withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.link_rounded,
+                      size: 34,
+                      color: Color(0xFFA5B4FC),
+                    ),
+                  ),
                 ),
-                contentPadding: EdgeInsets.all(20),
               ),
-              onSubmitted: (_) {
-                if (!_isScanning) {
-                  _scanUrl();
-                }
-              },
-            ),
+              const SizedBox(height: 18),
 
-            const SizedBox(height: 16),
+              const Text(
+                'Analyze a URL',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Enter a website link or domain to detect phishing pages, deceptive redirects, and malicious hosting infrastructure.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
 
-            SizedBox(
-              height: 56,
-              child: ElevatedButton.icon(
+              // URL Input Box
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: TextField(
+                  controller: _urlController,
+                  keyboardType: TextInputType.url,
+                  maxLines: 3,
+                  minLines: 2,
+                  maxLength: 2000,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'https://example.com/login...',
+                    hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.all(14),
+                  ),
+                  onSubmitted: (_) {
+                    if (!_isScanning) _scanUrl();
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Action button
+              ElevatedButton(
                 onPressed: _isScanning ? null : _scanUrl,
-                icon: _isScanning
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryTeal,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: _isScanning
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
                           ),
-                        ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Analyzing Content...',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                        ],
                       )
-                    : const Icon(Icons.security),
-                label: Text(
-                  _isScanning ? 'Analyzing Content...' : 'Analyze Content',
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shield_outlined, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Analyze Content',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                'SafeScan parses destination structure and compares against security blacklists. Always ensure browser certificates match intended hosts.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  height: 1.35,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Text(
-              'SafeScan checks against known threat databases and analyzes language patterns.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withOpacity(0.5),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

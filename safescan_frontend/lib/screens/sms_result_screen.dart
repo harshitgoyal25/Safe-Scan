@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+import '../widgets/custom_widgets.dart';
+import '../widgets/threat_gauge.dart';
+
 class SmsResultScreen extends StatelessWidget {
   final String message;
   final Map<String, dynamic> result;
@@ -13,155 +17,105 @@ class SmsResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final prediction = result['prediction']?.toString() ?? 'Unknown';
-
     final probability = (result['probability'] as num?)?.toDouble() ?? 0.0;
-
     final isMalicious = prediction.toLowerCase() == 'malicious';
-
-    final probabilityPercent = probability * 100;
-
-    final statusColor = isMalicious ? Colors.red : Colors.green;
-
-    final statusIcon = isMalicious
-        ? Icons.warning_rounded
-        : Icons.verified_rounded;
-    final riskLabel = probability >= 0.75
-        ? 'High threat likelihood'
-        : probability >= 0.40
-        ? 'Moderate threat likelihood'
-        : 'Low threat likelihood';
+    final statusColor = isMalicious ? AppColors.threatRed : AppColors.safeGreen;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('SMS Scan Result'), centerTitle: true),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('SMS Scan Result'),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
+              // 1. Circular Threat Indicator
+              ThreatCircleGauge(
+                score: probability,
+                isMalicious: isMalicious,
+                size: 130,
+              ),
+              const SizedBox(height: 20),
 
-              Icon(statusIcon, size: 90, color: statusColor),
-
-              const SizedBox(height: 18),
-
+              // 2. Headline
               Text(
-                isMalicious ? 'Malicious SMS Detected' : 'No Threat Detected',
+                isMalicious ? 'Malicious SMS Detected' : 'No Threats Detected',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
                   color: statusColor,
+                  letterSpacing: -0.4,
                 ),
               ),
-
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 8),
               Text(
                 isMalicious
-                    ? 'This message shows characteristics associated '
-                          'with potentially malicious or spam SMS.'
-                    : 'No significant malicious characteristics were '
-                          'detected in this message. Stay cautious with unknown senders.',
+                    ? 'This SMS exhibits linguistic characteristics frequently associated with phishing campaigns, spoofing, or fraudulent lures.'
+                    : 'No malicious phrasing, social engineering, or high-risk URL patterns were found in this SMS.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
               ),
+              const SizedBox(height: 24),
 
-              const SizedBox(height: 28),
+              // 3. 3-Segment Probability Bar
+              ThreeSegmentProbabilityBar(
+                score: probability,
+                isMalicious: isMalicious,
+              ),
+              const SizedBox(height: 20),
 
-              // Probability
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Threat likelihood',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Text(
-                        '${probabilityPercent.toStringAsFixed(2)}%',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      Text(
-                        riskLabel,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-
-                      LinearProgressIndicator(
-                        value: probability.clamp(0.0, 1.0),
-                        minHeight: 10,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ],
+              // 4. Scanned Message Preview Section
+              const SectionHeader(title: 'Scanned Message'),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: SelectableText(
+                  message,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.45,
                   ),
                 ),
               ),
+              const SizedBox(height: 28),
 
-              const SizedBox(height: 18),
+              // 5. Action button
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text(
+                  'Scan Another SMS',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryTeal,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-              // Scanned message
               const Text(
-                'Scanned Message',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 8),
-
-              Card(
-                elevation: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SelectableText(
-                    message,
-                    style: const TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // Scan again
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.sms_outlined),
-                  label: const Text(
-                    'Scan Another SMS',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Text(
-                'Automated machine-learning analysis. '
-                'Results are not a guarantee of safety.',
+                'Natural language processing and threat telemetry cannot replace human caution. Verify sender identities directly.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  color: AppColors.textMuted,
+                  height: 1.35,
                 ),
               ),
             ],

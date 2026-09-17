@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -121,14 +122,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isRegistering = _isRegistering;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: Form(
@@ -136,49 +137,182 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Icon(
-                        Icons.shield_rounded,
-                        size: 42,
-                        color: colorScheme.primary,
+                    // Top shield icon container
+                    Center(
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.tealContainer,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primaryTeal.withValues(alpha: 0.5),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.shield_rounded,
+                            size: 32,
+                            color: AppColors.lightTeal,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 16),
+                    // Security badge label
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealContainer,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primaryTeal.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: const Text(
+                          'ENCRYPTED TELEMETRY GATEWAY',
+                          style: TextStyle(
+                            color: AppColors.lightTeal,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Main headline
                     Text(
                       isRegistering ? 'Create your account' : 'Welcome back',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      isRegistering
-                          ? 'Create an account to keep your SafeScan experience in one place.'
-                          : 'Sign in to continue protecting what you receive.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.45,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 6),
+                    Text(
+                      isRegistering
+                          ? 'Set up your secure profile to synchronize device telemetry.'
+                          : 'Enter your credentials to access protected services.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Segmented Tab Toggle
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSecondary,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                if (_isRegistering) {
+                                  setState(() {
+                                    _isRegistering = false;
+                                    _errorMessage = null;
+                                  });
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: !_isRegistering
+                                      ? AppColors.surface
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: !_isRegistering
+                                      ? Border.all(color: AppColors.border)
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Sign In',
+                                    style: TextStyle(
+                                      color: !_isRegistering
+                                          ? AppColors.textPrimary
+                                          : AppColors.textMuted,
+                                      fontWeight: !_isRegistering
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                if (!_isRegistering) {
+                                  setState(() {
+                                    _isRegistering = true;
+                                    _errorMessage = null;
+                                  });
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: _isRegistering
+                                      ? AppColors.surface
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: _isRegistering
+                                      ? Border.all(color: AppColors.border)
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      color: _isRegistering
+                                          ? AppColors.textPrimary
+                                          : AppColors.textMuted,
+                                      fontWeight: _isRegistering
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Registration Name Field
                     if (isRegistering) ...[
                       TextFormField(
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.name],
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                         decoration: const InputDecoration(
                           labelText: 'Full name',
-                          prefixIcon: Icon(Icons.person_outline_rounded),
+                          labelStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.lightTeal, size: 20),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -189,34 +323,43 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 14),
                     ],
+
+                    // Email Field
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                       decoration: const InputDecoration(
                         labelText: 'Email address',
-                        prefixIcon: Icon(Icons.email_outlined),
+                        labelStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        prefixIcon: Icon(Icons.mail_outline_rounded, color: AppColors.lightTeal, size: 20),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Enter your email address';
                         }
-                        if (!value.contains('@'))
+                        if (!value.contains('@')) {
                           return 'Enter a valid email address';
+                        }
                         return null;
                       },
                     ),
                     const SizedBox(height: 14),
+
+                    // Registration Mobile Field
                     if (isRegistering) ...[
                       TextFormField(
                         controller: _mobileController,
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.telephoneNumber],
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                         decoration: const InputDecoration(
                           labelText: 'Mobile number',
-                          prefixIcon: Icon(Icons.phone_outlined),
+                          labelStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          prefixIcon: Icon(Icons.phone_outlined, color: AppColors.lightTeal, size: 20),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -230,97 +373,132 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 14),
                     ],
+
+                    // Password Field
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       onFieldSubmitted: (_) => _submit(),
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.lightTeal, size: 20),
                         suffixIcon: IconButton(
-                          tooltip: _obscurePassword
-                              ? 'Show password'
-                              : 'Hide password',
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
+                          tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppColors.textMuted,
+                            size: 20,
                           ),
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Enter your password';
+                        }
                         if (isRegistering && value.length < 6) {
                           return 'Use at least 6 characters';
                         }
                         return null;
                       },
                     ),
+
                     if (!isRegistering) ...[
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _isLoading ? null : _resetPassword,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.lightTeal,
+                            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
                           child: const Text('Forgot password?'),
                         ),
                       ),
                     ] else
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
+
                     if (_errorMessage != null) ...[
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF7F1D1D,
-                          ).withValues(alpha: 0.25),
+                          color: AppColors.threatRedContainer,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFB91C1C)),
+                          border: Border.all(color: AppColors.threatRed.withValues(alpha: 0.4)),
                         ),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Color(0xFFFCA5A5)),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: AppColors.threatRed, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
                     ],
+
+                    // Submit Button
                     ElevatedButton(
                       onPressed: _isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryTeal,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       child: _isLoading
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
                             )
-                          : Text(isRegistering ? 'Create account' : 'Sign in'),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => setState(() {
-                              _isRegistering = !_isRegistering;
-                              _errorMessage = null;
-                            }),
-                      child: Text(
-                        isRegistering
-                            ? 'I already have an account'
-                            : 'Create a new account',
-                      ),
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  isRegistering ? 'Create account' : 'Sign in',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_rounded, size: 18),
+                              ],
+                            ),
                     ),
                     const SizedBox(height: 28),
-                    Text(
-                      'Your account helps keep your SafeScan settings and activity connected.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.4,
-                      ),
+
+                    // Security telemetry footer
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.lock_rounded, size: 12, color: AppColors.textMuted),
+                        SizedBox(width: 6),
+                        Text(
+                          '256-Bit TLS End-to-End Encryption',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

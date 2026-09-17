@@ -1,10 +1,18 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telephony/telephony.dart';
 import 'api_service.dart';
 import 'notification_service.dart';
 import 'scan_history_service.dart';
 
 @pragma('vm:entry-point')
-backgroundMessageHandler(SmsMessage message) async {
+Future<void> backgroundMessageHandler(SmsMessage message) async {
+  final preferences = await SharedPreferences.getInstance();
+  final isEnabled = preferences.getBool('automatic_sms_scan_enabled') ?? false;
+  if (!isEnabled) {
+    return;
+  }
+
   final notificationService = NotificationService();
   await notificationService.init();
 
@@ -30,7 +38,7 @@ backgroundMessageHandler(SmsMessage message) async {
       await notificationService.showSmsScanResult(message.address, isMalicious);
     }
   } catch (e) {
-    print("Background SMS scan failed: $e");
+    debugPrint("Background SMS scan failed: $e");
   }
 }
 
@@ -43,7 +51,7 @@ class SmsBackgroundService {
 
   SmsBackgroundService._internal();
 
-  Future<void> init() async {
+  Future<bool> init() async {
     bool? result = await telephony.requestPhoneAndSmsPermissions;
 
     if (result != null && result) {
@@ -55,5 +63,7 @@ class SmsBackgroundService {
         onBackgroundMessage: backgroundMessageHandler,
       );
     }
+
+    return result == true;
   }
 }

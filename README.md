@@ -69,7 +69,7 @@ SafeScan delivers three distinct cybersecurity detection capabilities via a unif
 ### End-to-End Workflow:
 1. **User Authentication:** Users sign in using Firebase Authentication (Email/Password, Google Sign-In, or Guest mode).
 2. **Threat Screening:** The user uploads a file or inputs text (or incoming SMS/APKs are intercepted by background services).
-3. **Authenticated API Processing:** The Flutter client sends requests with a Firebase Bearer token (`Authorization: Bearer <ID_token>`) to the FastAPI backend.
+3. **High-Availability API Processing:** The Flutter client sends scan requests to the FastAPI backend and syncs scan history with Firebase Bearer token (`Authorization: Bearer <ID_token>`).
 4. **Machine Learning Inference:** The backend applies pre-trained LightGBM and Logistic Regression models using exact decision thresholds.
 5. **Dynamic Visual Feedback:** The app visualizes the threat probability using custom circular and linear risk gauges with actionable security recommendations.
 6. **Persistent History:** Every completed scan is automatically saved to Cloud Firestore and accessible through the scan history viewer.
@@ -105,9 +105,9 @@ SafeScan delivers three distinct cybersecurity detection capabilities via a unif
 │                                                                         │
 │  • Firebase Admin SDK (auth.verify_id_token, firestore.client)          │
 │                                                                         │
-│  POST /scan            ──► current_user_id ──► extractor.py (LightGBM)  │
-│  POST /scan/sms        ──► current_user_id ──► sms_detector (LogReg)   │
-│  POST /scan/url        ──► current_user_id ──► url_detector (LogReg)   │
+│  POST /scan            ──► extractor.py (LightGBM)                       │
+│  POST /scan/sms        ──► sms_detector (LogReg)                        │
+│  POST /scan/url        ──► url_detector (LogReg)                        │
 │  POST /scan/history    ──► current_user_id ──► Firestore Users Doc     │
 │  GET  /health          ──► System Health Check                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -202,12 +202,13 @@ SafeScan/
 
 ### `app/main.py`
 
-**The central API service.** Initialises `FastAPI(title="SafeScan API", version="1.0.0")`, integrates **Firebase Admin SDK** for Bearer token verification, and exposes protected scanning and history endpoints.
+**The central API service.** Initialises `FastAPI(title="SafeScan API", version="1.0.0")`, integrates **Firebase Admin SDK** for Bearer token verification, and exposes high-availability scanning and protected history logging endpoints.
 
 **Global Security & Validation Constraints:**
 - `MAX_FILE_SIZE = 200 MB` — maximum APK file upload size.
 - `MAX_TEXT_LENGTH = 10,000 characters` — maximum SMS message and URL length.
-- `current_user_id` FastAPI dependency: extracts and verifies `Authorization: Bearer <Firebase_ID_token>`. Unauthenticated requests return `HTTP 401 Unauthorized`.
+- `current_user_id` FastAPI dependency: extracts and verifies `Authorization: Bearer <Firebase_ID_token>` for scan history logging (`POST /scan/history`). Unauthenticated requests to `/scan/history` return `HTTP 401 Unauthorized`.
+- Primary scan endpoints (`/scan`, `/scan/sms`, `/scan/url`) operate as open high-availability scan services to prevent deployment/credential failures.
 
 **API Endpoints Summary:**
 
@@ -215,9 +216,9 @@ SafeScan/
 |---|---|---|---|---|
 | `GET` | `/` | None | None | Service identification and status |
 | `GET` | `/health` | None | None | Health check endpoint returning `{"status": "healthy"}` |
-| `POST` | `/scan` | Required | Multipart `.apk` file | Extracts features with AndroGuard and infers with LightGBM |
-| `POST` | `/scan/sms` | Required | `{"message": "..."}` | Evaluates message text via dual TF-IDF and Logistic Regression |
-| `POST` | `/scan/url` | Required | `{"url": "..."}` | Evaluates web link via URL-aware TF-IDF and Logistic Regression |
+| `POST` | `/scan` | None | Multipart `.apk` file | Extracts features with AndroGuard and infers with LightGBM |
+| `POST` | `/scan/sms` | None | `{"message": "..."}` | Evaluates message text via dual TF-IDF and Logistic Regression |
+| `POST` | `/scan/url` | None | `{"url": "..."}` | Evaluates web link via URL-aware TF-IDF and Logistic Regression |
 | `POST` | `/scan/history` | Required | `ScanHistoryRequest` | Logs scan results directly into Firestore under user collection |
 
 ---
@@ -262,10 +263,9 @@ SafeScan/
 ### `test_api.py`
 
 Pytest test suite validating API robustness:
-- Rejection of unauthenticated requests (`HTTP 401`).
-- Rejection of invalid or forged Firebase tokens.
+- Verification of scan endpoints without auth requirements.
+- History logging endpoint authorization checks (`HTTP 401` on missing/invalid token).
 - Rejection of empty SMS text and empty APK uploads (`HTTP 400`).
-- History logging endpoint authorization checks.
 
 ---
 
@@ -351,7 +351,7 @@ Liveness and readiness health check.
 ```
 
 ### `POST /scan` — APK Analysis
-- **Headers:** `Authorization: Bearer <Firebase_ID_token>`
+- **Headers:** None
 - **Body:** `multipart/form-data` with form field `file` containing `.apk`.
 - **Response:**
 ```json
@@ -366,7 +366,7 @@ Liveness and readiness health check.
 ```
 
 ### `POST /scan/sms` — SMS Analysis
-- **Headers:** `Authorization: Bearer <Firebase_ID_token>`
+- **Headers:** None
 - **Body:**
 ```json
 { "message": "Urgent: Your bank account is locked. Verify at https://secure-login-bank.net" }
@@ -381,7 +381,7 @@ Liveness and readiness health check.
 ```
 
 ### `POST /scan/url` — URL Analysis
-- **Headers:** `Authorization: Bearer <Firebase_ID_token>`
+- **Headers:** None
 - **Body:**
 ```json
 { "url": "https://secure-login-bank.net/account/update" }
@@ -396,7 +396,7 @@ Liveness and readiness health check.
 ```
 
 ### `POST /scan/history` — Scan History Logging
-- **Headers:** `Authorization: Bearer <Firebase_ID_token>`
+- **Headers:** `Authorization: Bearer <Firebase_ID_token>` (Required)
 - **Body:**
 ```json
 {
@@ -623,4 +623,4 @@ flutter run
 - **Static Analysis Scope:** The APK scanner performs static bytecode and manifest inspection only. Dynamic payloads, runtime reflection, packed or heavily obfuscated code, and dynamically downloaded stages are outside its scope.
 - **Dataset Boundaries:** The models reflect training distributions. Zero-day threats, new phishing templates, or novel malware patterns emerging after dataset collection may yield false negatives.
 - **Operating Permissions:** Automated background SMS and APK features require explicit Android runtime permissions (Notification, SMS, Storage) which must be granted by the user.
-- **Authentication Security:** The FastAPI backend enforces Firebase ID token verification on all scan and history endpoints. In production, ensure HTTPS/TLS is configured on the backend gateway.
+- **Authentication Security:** The FastAPI backend enforces Firebase ID token verification on the history logging endpoint (`POST /scan/history`). Primary scan endpoints (`/scan`, `/scan/sms`, `/scan/url`) operate publicly for high availability on cloud hosting environments (such as Render) regardless of server-side ADC key configuration.
